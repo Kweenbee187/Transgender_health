@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Transgender Healthcare Bias — India 4D Simulation</title>
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg:        #060d1a;
+  --surface:   #0b1628;
+  --surface2:  #0f1e35;
+  --surface3:  #162339;
+  --border:    #1d3050;
+  --border2:   #243b5e;
+  --text:      #dce8f8;
+  --text2:     #7a9cc2;
+  --text3:     #3e6080;
+  --accent:    #3fa9f5;
+  --accent2:   #0f6fbd;
+  --red:       #ff4757;
+  --red-dim:   rgba(255,71,87,0.15);
+  --orange:    #ffa502;
+  --green:     #2ed573;
+  --green-dim: rgba(46,213,115,0.12);
+  --purple:    #be5cf5;
+  --cyan:      #00d2d3;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.5;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:9999}
+
+/* HEADER */
+.header{background:linear-gradient(180deg,#0a1a30 0%,var(--surface) 100%);border-bottom:1px solid var(--border);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 30px rgba(0,0,0,0.5)}
+.header-brand{display:flex;align-items:center;gap:14px}
+.header-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent2),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 16px rgba(63,169,245,0.3);flex-shrink:0}
+.header-text h1{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.5px}
+.header-text .sub{font-size:11px;color:var(--text2);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:10px}
+.badge-synthetic{background:rgba(255,71,87,0.12);color:var(--red);border:1px solid rgba(255,71,87,0.3);padding:4px 12px;border-radius:4px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.5px;animation:pulse-badge 3s ease-in-out infinite}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:0.6}}
+.badge-dim{background:var(--surface3);color:var(--text2);border:1px solid var(--border);padding:4px 10px;border-radius:4px;font-size:11px}
+
+/* CONTROLS */
+.controls{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ctrl-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.btn-play{display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--accent2),#0a5a9c);color:#fff;border:none;border-radius:6px;padding:7px 16px;font-family:var(--font-mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;box-shadow:0 0 16px rgba(63,169,245,0.25);flex-shrink:0}
+.btn-play:hover{filter:brightness(1.2)}
+.btn-play.playing{background:linear-gradient(135deg,#5a3e7e,#8a2be2)}
+.slider-group{display:flex;align-items:center;gap:10px;flex:1;max-width:380px}
+.ctrl-label{font-family:var(--font-mono);font-size:10px;color:var(--text2);white-space:nowrap;letter-spacing:0.3px}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 8px rgba(63,169,245,0.5);transition:transform 0.15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.time-badge{font-family:var(--font-mono);font-size:12px;color:var(--accent);background:rgba(63,169,245,0.1);border:1px solid rgba(63,169,245,0.25);padding:3px 8px;border-radius:4px;min-width:42px;text-align:center;font-weight:700}
+.toggle-wrap{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px}
+.tgl-word{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:0.3px;transition:color 0.3s}
+.toggle{position:relative;width:38px;height:18px;cursor:pointer}
+.toggle input{display:none}
+.toggle-track{position:absolute;inset:0;background:rgba(255,71,87,0.3);border:1px solid rgba(255,71,87,0.5);border-radius:18px;transition:all 0.3s}
+.toggle-thumb{position:absolute;width:12px;height:12px;top:2px;left:2px;background:var(--red);border-radius:50%;transition:all 0.3s;box-shadow:0 0 6px rgba(255,71,87,0.6)}
+input:checked~.toggle-track{background:rgba(46,213,115,0.2);border-color:rgba(46,213,115,0.5)}
+input:checked~.toggle-thumb{transform:translateX(20px);background:var(--green);box-shadow:0 0 8px rgba(46,213,115,0.6)}
+.mode-chip{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:0.3px;padding:4px 10px;border-radius:4px;transition:all 0.3s}
+.mode-chip.biased{color:var(--red);background:var(--red-dim);border:1px solid rgba(255,71,87,0.25)}
+.mode-chip.fair{color:var(--green);background:var(--green-dim);border:1px solid rgba(46,213,115,0.25)}
+
+/* STATS */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+.stat-card{background:var(--surface);padding:10px 18px;display:flex;flex-direction:column;gap:2px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);transform:scaleX(0);transition:transform 0.4s}
+.stat-card.updating::before{transform:scaleX(1)}
+.stat-lbl{font-family:var(--font-mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px}
+.stat-val{font-family:var(--font-mono);font-size:22px;font-weight:700;line-height:1;transition:color 0.4s}
+.stat-sub{font-size:10px;color:var(--text2)}
+
+/* LAYOUT */
+.main-layout{display:grid;grid-template-columns:1.1fr 0.9fr;gap:1px;background:var(--border)}
+.panel{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;min-height:0}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.panel-title{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px}
+.panel-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.chart-wrap{flex:1;min-height:220px}
+#panel-map{grid-row:span 2}
+#panel-map .chart-wrap{min-height:460px}
+.bottom-layout{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-top:1px solid var(--border)}
+
+/* KNOWLEDGE GRAPH */
+#distChart{position:relative;overflow:hidden}
+#kg-canvas{width:100%;height:100%;display:block}
+
+/* KG LEGEND */
+.kg-legend{display:flex;align-items:center;gap:12px;margin-top:7px;flex-shrink:0;flex-wrap:wrap;padding:0 2px}
+.kg-leg-item{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;color:var(--text2)}
+.kg-leg-sw{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.kg-sep{width:1px;height:14px;background:var(--border);flex-shrink:0}
+
+/* TOOLTIP */
+.kg-tip{position:fixed;background:rgba(11,22,40,0.97);border:1px solid #243b5e;border-radius:8px;padding:11px 15px;font-family:'Space Mono',monospace;font-size:10px;color:#dce8f8;pointer-events:none;z-index:9000;display:none;box-shadow:0 12px 40px rgba(0,0,0,0.8);line-height:1.85;min-width:175px;backdrop-filter:blur(8px)}
+
+/* EXPLANATION */
+.exp-panel{background:var(--surface);padding:16px 18px;overflow-y:auto;max-height:340px}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.exp-block{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.exp-block::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:3px 0 0 3px}
+.exp-block.bias::after{background:var(--red)}.exp-block.aci::after{background:var(--orange)}.exp-block.fair::after{background:var(--green)}.exp-block.grp::after{background:var(--purple)}
+.exp-block-title{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:0.5px;margin-bottom:8px}
+.exp-block.bias .exp-block-title{color:var(--red)}.exp-block.aci .exp-block-title{color:var(--orange)}.exp-block.fair .exp-block-title{color:var(--green)}.exp-block.grp .exp-block-title{color:var(--purple)}
+.exp-block p{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:6px}
+.formula{font-family:var(--font-mono);font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--accent);margin-top:4px}
+.aci-legend{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.aci-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)}
+.aci-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.plotly .bg{fill:transparent!important}
+
+@media(max-width:900px){.main-layout{grid-template-columns:1fr}#panel-map{grid-row:span 1}#panel-map .chart-wrap{min-height:320px}.bottom-layout{grid-template-columns:1fr}.stats-bar{grid-template-columns:repeat(2,1fr)}.exp-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="header-icon">🧠</div>
+    <div class="header-text">
+      <h1>TRANSGENDER HEALTHCARE BIAS — INDIA 4D SIMULATION</h1>
+      <div class="sub">Space × Time × Distribution × Model &nbsp;|&nbsp; Spatiotemporal Bias &amp; Fairness Analysis</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="badge-synthetic">⚠ SYNTHETIC DATA ONLY</div>
+    <div class="badge-dim">N = 800 individuals</div>
+    <div class="badge-dim">16 States</div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="btn-play" id="playBtn" onclick="togglePlay()">
+    <span id="playIcon">▶</span>
+    <span id="playText">PLAY</span>
+  </button>
+  <div class="ctrl-sep"></div>
+  <div class="slider-group">
+    <span class="ctrl-label">TIME&nbsp;T=</span>
+    <input type="range" id="timeSlider" min="0" max="10" step="1" value="0" oninput="onSliderChange(this.value)" />
+    <div class="time-badge" id="timeBadge">0</div>
+    <span class="ctrl-label">YRS</span>
+  </div>
+  <div class="ctrl-sep"></div>
+  <div class="toggle-wrap">
+    <span class="tgl-word" id="tglLeft" style="color:var(--red)">BIASED</span>
+    <label class="toggle">
+      <input type="checkbox" id="fairCheck" onchange="onFairnessChange()" />
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </label>
+    <span class="tgl-word" id="tglRight" style="color:var(--text3)">FAIR</span>
+  </div>
+  <div class="mode-chip biased" id="modeChip">⚠ BASELINE MODEL (BIASED)</div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-card"><div class="stat-lbl">Overall Bias (Disparity)</div><div class="stat-val" id="sv-bias" style="color:var(--red)">—</div><div class="stat-sub">max(MAE) − min(MAE)</div></div>
+  <div class="stat-card"><div class="stat-lbl">Highest Error State</div><div class="stat-val" id="sv-max" style="color:var(--red)">—</div><div class="stat-sub" id="sv-maxname">—</div></div>
+  <div class="stat-card"><div class="stat-lbl">Lowest Error State</div><div class="stat-val" id="sv-min" style="color:var(--green)">—</div><div class="stat-sub" id="sv-minname">—</div></div>
+  <div class="stat-card"><div class="stat-lbl">Fairness Bias Reduction</div><div class="stat-val" id="sv-red" style="color:var(--green)">—</div><div class="stat-sub">vs. biased baseline</div></div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-layout">
+
+  <!-- MAP -->
+  <div class="panel" id="panel-map">
+    <div class="panel-hd">
+      <div class="panel-title"><div class="panel-dot" style="background:var(--accent)"></div>India Map — Bias Intensity by State</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3)">BUBBLE SIZE &amp; COLOR = MAE · HOVER FOR DETAILS</div>
+    </div>
+    <div class="chart-wrap" id="mapChart"></div>
+  </div>
+
+  <!-- BIAS OVER TIME -->
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="panel-title"><div class="panel-dot" style="background:var(--orange)"></div>MAE Over Time by ACI Level</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3)">DASHED = BASELINE · SOLID = FAIR</div>
+    </div>
+    <div class="chart-wrap" id="timeChart"></div>
+  </div>
+
+  <!-- KNOWLEDGE GRAPH -->
+  <div class="panel" id="panel-kg">
+    <div class="panel-hd">
+      <div class="panel-title">
+        <div class="panel-dot" style="background:var(--purple)"></div>
+        4D Knowledge Graph — State Biomarker Distribution (T=<span id="distT">0</span>)
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3)">NODE SIZE=MAE · RING=ACI · DUAL ARC=TF↑/TM↓ DEVIATION · DRAG NODES</div>
+    </div>
+    <div class="chart-wrap" id="distChart"></div>
+    <!-- KG LEGEND -->
+    <div class="kg-legend">
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="border:2px solid #3fa9f5;background:transparent"></div>High ACI</div>
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="border:2px solid #ffa502;background:transparent"></div>Medium ACI</div>
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="border:2px solid #ff4757;background:transparent"></div>Low ACI</div>
+      <div class="kg-sep"></div>
+      <div class="kg-leg-item">
+        <svg width="14" height="12" viewBox="0 0 14 12"><path d="M1 9 Q7 1 13 9" fill="#be5cf5" opacity="0.85"/></svg>TF_On upper arc
+      </div>
+      <div class="kg-leg-item">
+        <svg width="14" height="12" viewBox="0 0 14 12"><path d="M1 3 Q7 11 13 3" fill="#00d2d3" opacity="0.85"/></svg>TM_On lower arc
+      </div>
+      <div class="kg-sep"></div>
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="background:#2ed573"></div>Low MAE</div>
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="background:#ffa502"></div>Mid MAE</div>
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="background:#ff4757"></div>High MAE</div>
+      <div class="kg-sep"></div>
+      <div class="kg-leg-item"><div class="kg-leg-sw" style="background:#ff4757;box-shadow:0 0 5px #ff4757"></div>Risk &gt;30%</div>
+      <div class="kg-leg-item" style="color:var(--text3)">Edge thickness = biomarker similarity</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM GRID -->
+<div class="bottom-layout">
+  <!-- RISK -->
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="panel-title"><div class="panel-dot" style="background:var(--red)"></div>Population at Risk (Hct &gt; 48) by ACI</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3)">TM_ON GROUP · T=<span id="riskT">0</span></div>
+    </div>
+    <div class="chart-wrap" style="min-height:200px" id="riskChart"></div>
+  </div>
+  <!-- EXPLANATION -->
+  <div class="exp-panel">
+    <div class="panel-title" style="margin-bottom:12px"><div class="panel-dot" style="background:var(--cyan)"></div>Explanation Panel</div>
+    <div class="exp-grid">
+      <div class="exp-block bias">
+        <div class="exp-block-title">🔴 What is Bias?</div>
+        <p>When a model uses only the <strong style="color:var(--text)">group mean</strong> as prediction, individuals who deviate from the mean receive high errors. Low-access regions amplify this.</p>
+        <div class="formula">error_i = |actual_i − group_mean|</div>
+        <div class="formula">Bias = max(MAE) − min(MAE)</div>
+      </div>
+      <div class="exp-block aci">
+        <div class="exp-block-title">🟡 Access &amp; Care Index (ACI)</div>
+        <p>Reflects healthcare infrastructure quality. Low ACI → high noise → larger prediction errors → greater disparity.</p>
+        <div class="aci-legend">
+          <div class="aci-row"><div class="aci-dot" style="background:#3fa9f5"></div>High: Delhi · Maharashtra · Karnataka · Gujarat · Punjab</div>
+          <div class="aci-row"><div class="aci-dot" style="background:#ffa502"></div>Med: Tamil Nadu · Kerala · W.Bengal · M.Pradesh · Telangana</div>
+          <div class="aci-row"><div class="aci-dot" style="background:#ff4757"></div>Low: Bihar · Assam · Rajasthan · U.Pradesh · Odisha · Jharkhand</div>
+        </div>
+      </div>
+      <div class="exp-block fair">
+        <div class="exp-block-title">🟢 Fairness Mitigation</div>
+        <p>Fairness-aware model gives <strong style="color:var(--text)">higher weight</strong> to poorly-predicted individuals, reducing MAE spread across states.</p>
+        <div class="formula">w_i = 1 / (error_i + ε)</div>
+        <div class="formula">fair_pred = Σ(w·actual) / Σ(w)</div>
+      </div>
+      <div class="exp-block grp">
+        <div class="exp-block-title">🟣 Knowledge Graph Guide</div>
+        <p><b style="color:#be5cf5">Purple upper arc</b> = TF_On deviation from expected mean. <b style="color:#00d2d3">Cyan lower arc</b> = TM_On deviation. Arc radius ∝ how far a state deviates. <b>Node outer ring size</b> = MAE magnitude. <b style="color:#ff4757">Red pulse</b> = TM at-risk &gt;30%. Edge thickness = biomarker similarity.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP (outside panels so it floats freely) -->
+<div class="kg-tip" id="kgTip"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const CFG = {
+  N_PER_STATE   : 50,
+  TIME_MAX      : 10,
+  TF_MEAN:40, TF_STD:3,
+  TM_MEAN:45, TM_STD:3.5,
+  TF_DELTA:-0.20, TM_DELTA:0.30,
+  RISK_THRESH:48,
+  ACI_NOISE:{High:1.5,Medium:3.0,Low:6.0},
+  ANIM_INTERVAL:850,
+};
+
+const STATES=[
+  {name:'Delhi',      lat:28.61,lon:77.21,aci:'High'},
+  {name:'Maharashtra',lat:19.66,lon:75.30,aci:'High'},
+  {name:'Karnataka',  lat:15.32,lon:75.71,aci:'High'},
+  {name:'Gujarat',    lat:22.26,lon:71.19,aci:'High'},
+  {name:'Punjab',     lat:31.15,lon:75.34,aci:'High'},
+  {name:'Tamil Nadu', lat:11.13,lon:78.66,aci:'Medium'},
+  {name:'Kerala',     lat:10.85,lon:76.27,aci:'Medium'},
+  {name:'West Bengal',lat:22.98,lon:87.85,aci:'Medium'},
+  {name:'M.Pradesh',  lat:22.97,lon:78.66,aci:'Medium'},
+  {name:'Telangana',  lat:17.12,lon:79.02,aci:'Medium'},
+  {name:'Bihar',      lat:25.10,lon:85.31,aci:'Low'},
+  {name:'Assam',      lat:26.24,lon:92.54,aci:'Low'},
+  {name:'Rajasthan',  lat:27.02,lon:74.22,aci:'Low'},
+  {name:'U.Pradesh',  lat:26.85,lon:80.91,aci:'Low'},
+  {name:'Odisha',     lat:20.94,lon:85.10,aci:'Low'},
+  {name:'Jharkhand',  lat:23.61,lon:85.28,aci:'Low'},
+];
+
+const ACI_COLOR={High:'#3fa9f5',Medium:'#ffa502',Low:'#ff4757'};
+/* ACI vertical positions (fraction of canvas height) */
+const ACI_Y={High:0.20,Medium:0.52,Low:0.82};
+
+/* ============================================================
+   RNG & SIMULATION
+   ============================================================ */
+function mkRNG(seed){let s=(seed>>>0)||1;return()=>{s=Math.imul(1664525,s)+1013904223>>>0;return s/4294967296};}
+function rNorm(rng,mu,sig){let u,v;do{u=rng();}while(!u);do{v=rng();}while(!v);return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*sig+mu;}
+
+const BASE=(()=>{const rng=mkRNG(20240101),res=[];STATES.forEach(st=>{for(let i=0;i<25;i++)res.push({state:st.name,lat:st.lat,lon:st.lon,aci:st.aci,group:'TF_On',base:rNorm(rng,40,3)});for(let i=0;i<25;i++)res.push({state:st.name,lat:st.lat,lon:st.lon,aci:st.aci,group:'TM_On',base:rNorm(rng,45,3.5)});});return res;})();
+
+function snap(t){const rng=mkRNG(77777+t*31337);return BASE.map(ind=>{const drift=ind.group==='TF_On'?-0.20*t:0.30*t;return{...ind,actual:ind.base+drift+rNorm(rng,0,CFG.ACI_NOISE[ind.aci])};});}
+function gMeans(sn){const sum={},cnt={};sn.forEach(({group,actual})=>{sum[group]=(sum[group]||0)+actual;cnt[group]=(cnt[group]||0)+1;});const m={};Object.keys(sum).forEach(g=>m[g]=sum[g]/cnt[g]);return m;}
+function fMeans(sn,gm){const ws={},wt={};sn.forEach(i=>{const w=1/(Math.abs(i.actual-gm[i.group])+1e-3);ws[i.group]=(ws[i.group]||0)+w*i.actual;wt[i.group]=(wt[i.group]||0)+w;});const fm={};Object.keys(ws).forEach(g=>fm[g]=ws[g]/wt[g]);return fm;}
+function sMAE(sn,pred){const b={};sn.forEach(i=>(b[i.state]=b[i.state]||[]).push(Math.abs(i.actual-pred[i.group])));const o={};Object.keys(b).forEach(s=>o[s]=b[s].reduce((a,x)=>a+x,0)/b[s].length);return o;}
+function aMAE(sn,pred){const b={};sn.forEach(i=>(b[i.aci]=b[i.aci]||[]).push(Math.abs(i.actual-pred[i.group])));const o={};Object.keys(b).forEach(a=>o[a]=b[a].reduce((x,y)=>x+y,0)/b[a].length);return o;}
+function aRisk(sn){const r={};['High','Medium','Low'].forEach(a=>{const p=sn.filter(i=>i.group==='TM_On'&&i.aci===a);r[a]=p.length?(p.filter(i=>i.actual>48).length/p.length)*100:0;});return r;}
+
+/* precompute all timesteps */
+const TS=[];
+for(let t=0;t<=10;t++){const sn=snap(t);const gm=gMeans(sn);const fm=fMeans(sn,gm);TS.push({t,sn,gm,fm,bSMAE:sMAE(sn,gm),fSMAE:sMAE(sn,fm),bAMAE:aMAE(sn,gm),fAMAE:aMAE(sn,fm),risk:aRisk(sn)});}
+
+/* ============================================================
+   REACTIVE STATE
+   ============================================================ */
+let curT=0,isFair=false,playing=false,playTmr=null;
+
+/* ============================================================
+   PLOTLY HELPERS
+   ============================================================ */
+const PC={responsive:true,displayModeBar:false,scrollZoom:false};
+const AX={gridcolor:'#1d3050',zerolinecolor:'#1d3050',color:'#7a9cc2',tickfont:{color:'#7a9cc2',size:10}};
+
+function mapTraces(t,fair){
+  const mae=fair?TS[t].fSMAE:TS[t].bSMAE;
+  const vals=STATES.map(s=>mae[s.name]||0);
+  const vMax=Math.max(...vals);
+  return[{type:'scattergeo',lat:STATES.map(s=>s.lat),lon:STATES.map(s=>s.lon),mode:'markers+text',
+    text:STATES.map(s=>s.name.length>9?s.name.slice(0,9):s.name),textfont:{size:9,color:'#99b8d4'},textposition:'top center',
+    hovertext:STATES.map((s,i)=>[`<b>${s.name}</b>`,`ACI: <b>${s.aci}</b>`,`MAE: <b>${vals[i].toFixed(3)}</b>`,`Model: <b>${fair?'Fair':'Biased'}</b>`,`T=${t}`].join('<br>')),
+    hoverinfo:'text',
+    marker:{size:vals.map(v=>16+v*6),color:vals,colorscale:[[0,'#2ed573'],[0.35,'#ffd32a'],[0.7,'#ffa502'],[1,'#ff4757']],cmin:0,cmax:Math.max(vMax,0.01),showscale:true,
+      colorbar:{title:{text:'MAE',font:{color:'#7a9cc2',size:11},side:'right'},tickfont:{color:'#7a9cc2',size:9},thickness:10,len:0.6,x:1.02,bgcolor:'rgba(0,0,0,0)',bordercolor:'#1d3050',borderwidth:1},
+      opacity:0.88,line:{width:1.5,color:STATES.map(s=>ACI_COLOR[s.aci])}},showlegend:false}];
+}
+function mapLayout(){return{paper_bgcolor:'transparent',margin:{t:0,b:0,l:0,r:70},
+  geo:{scope:'asia',resolution:50,lonaxis:{range:[64,100]},lataxis:{range:[6,38]},showland:true,landcolor:'#0f1e35',showocean:true,oceancolor:'#070f1c',showcountries:true,countrycolor:'#1d3050',showsubunits:true,subunitcolor:'#162339',bgcolor:'rgba(0,0,0,0)',showframe:false,coastlinecolor:'#1d3050',coastlinewidth:1,showlakes:true,lakecolor:'#070f1c'},showlegend:false,
+  hoverlabel:{bgcolor:'#0b1628',font:{color:'#dce8f8',size:12},bordercolor:'#1d3050'}};}
+
+function timeTraces(){
+  const ts=Array.from({length:11},(_,i)=>i),traces=[];
+  ['High','Medium','Low'].forEach(a=>{
+    traces.push({x:ts,y:TS.map(s=>s.bAMAE[a]||0),name:`${a} — Baseline`,mode:'lines',line:{color:ACI_COLOR[a],width:1.5,dash:'dot'},opacity:0.5,legendgroup:a});
+    traces.push({x:ts,y:TS.map(s=>s.fAMAE[a]||0),name:`${a} — Fair`,mode:'lines',line:{color:ACI_COLOR[a],width:2},legendgroup:a});
+  });
+  traces.push({x:[0,0],y:[0,20],mode:'lines',name:'T',line:{color:'#58d8ff',width:1.5,dash:'dash'},showlegend:false});
+  return traces;
+}
+function timeLayout(){return{paper_bgcolor:'transparent',plot_bgcolor:'rgba(255,255,255,0.02)',margin:{t:5,b:42,l:48,r:10},
+  xaxis:{...AX,title:{text:'Time (years)',font:{color:'#7a9cc2',size:11}}},yaxis:{...AX,title:{text:'MAE',font:{color:'#7a9cc2',size:11}}},
+  legend:{font:{color:'#7a9cc2',size:9},bgcolor:'rgba(0,0,0,0)',x:1,xanchor:'right',y:1},hovermode:'x unified',
+  hoverlabel:{bgcolor:'#0b1628',font:{color:'#dce8f8',size:11},bordercolor:'#1d3050'}};}
+
+function riskTraces(t){const r=TS[t].risk,labels=['High ACI','Medium ACI','Low ACI'],vals=[r.High,r.Medium,r.Low];
+  return[{type:'bar',x:labels,y:vals,text:vals.map(v=>v.toFixed(1)+'%'),textposition:'outside',textfont:{color:'#dce8f8',size:11,family:'Space Mono,monospace'},
+    marker:{color:['#3fa9f5','#ffa502','#ff4757'],opacity:0.75,line:{color:['#3fa9f5','#ffa502','#ff4757'],width:1}},name:'% at risk'}];}
+function riskLayout(){return{paper_bgcolor:'transparent',plot_bgcolor:'rgba(255,255,255,0.02)',margin:{t:5,b:50,l:55,r:10},bargap:0.4,
+  xaxis:{...AX},yaxis:{...AX,range:[0,105],title:{text:'% Population at Risk',font:{color:'#7a9cc2',size:11}}},
+  shapes:[{type:'line',x0:-0.5,x1:2.5,y0:50,y1:50,line:{color:'#ff4757',dash:'dot',width:1}}],
+  annotations:[{x:2.5,y:50,xanchor:'right',text:'Warning Level',showarrow:false,font:{color:'#ff4757',size:9}}],
+  hoverlabel:{bgcolor:'#0b1628',font:{color:'#dce8f8',size:11},bordercolor:'#1d3050'}};}
+
+/* ============================================================
+   D3 KNOWLEDGE GRAPH
+   ============================================================ */
+const KG={svg:null,sim:null,ng:null,lk:null,ok:false,w:0,h:0};
+const arcG=d3.arc();
+
+/* per-state stats at time t */
+function sStat(t){
+  const sn=TS[t].sn;
+  const mae=isFair?TS[t].fSMAE:TS[t].bSMAE;
+  const res={};
+  STATES.forEach(s=>{
+    const tf=sn.filter(i=>i.state===s.name&&i.group==='TF_On').map(i=>i.actual);
+    const tm=sn.filter(i=>i.state===s.name&&i.group==='TM_On').map(i=>i.actual);
+    const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+    const std=a=>{const m=avg(a);return Math.sqrt(a.reduce((x,v)=>x+(v-m)**2,0)/a.length);};
+    res[s.name]={tfM:avg(tf),tmM:avg(tm),tfS:std(tf),tmS:std(tm),mae:mae[s.name]||0,tmRisk:tm.filter(v=>v>48).length/tm.length,aci:s.aci};
+  });
+  return res;
+}
+
+/* MAE → colour (green-orange-red) */
+function mCol(m){const t=Math.min(m/7,1);return t<0.5?d3.interpolateRgb('#2ed573','#ffa502')(t*2):d3.interpolateRgb('#ffa502','#ff4757')((t-0.5)*2);}
+
+function initKG(){
+  const el=document.getElementById('distChart');
+  const r=el.getBoundingClientRect();
+  KG.w=Math.max(r.width||380,200);
+  KG.h=Math.max(r.height||240,160);
+
+  d3.select('#distChart').selectAll('*').remove();
+
+  const svg=d3.select('#distChart').append('svg')
+    .attr('width','100%').attr('height','100%')
+    .attr('viewBox',`0 0 ${KG.w} ${KG.h}`)
+    .style('display','block').style('overflow','visible');
+  KG.svg=svg;
+
+  /* ── Defs ── */
+  const defs=svg.append('defs');
+  // node glow
+  const fg=defs.append('filter').attr('id','ng').attr('x','-70%').attr('y','-70%').attr('width','240%').attr('height','240%');
+  fg.append('feGaussianBlur').attr('stdDeviation','4').attr('result','b');
+  const fm1=fg.append('feMerge');fm1.append('feMergeNode').attr('in','b');fm1.append('feMergeNode').attr('in','SourceGraphic');
+  // risk glow (red, stronger)
+  const fr=defs.append('filter').attr('id','rg').attr('x','-100%').attr('y','-100%').attr('width','300%').attr('height','300%');
+  fr.append('feGaussianBlur').attr('stdDeviation','6').attr('result','b');
+  const fm2=fr.append('feMerge');fm2.append('feMergeNode').attr('in','b');fm2.append('feMergeNode').attr('in','SourceGraphic');
+
+  /* ── ACI band backgrounds ── */
+  const bandG=svg.append('g');
+  Object.entries(ACI_Y).forEach(([aci,yf])=>{
+    const cy=KG.h*yf,bh=KG.h*0.27;
+    bandG.append('rect').attr('x',38).attr('y',cy-bh/2).attr('width',KG.w-42).attr('height',bh)
+      .attr('rx',5).attr('fill',ACI_COLOR[aci]).attr('opacity',0.05);
+    bandG.append('line').attr('x1',38).attr('y1',cy-bh/2).attr('x2',KG.w-4).attr('y2',cy-bh/2)
+      .attr('stroke',ACI_COLOR[aci]).attr('stroke-opacity',0.18).attr('stroke-width',0.7)
+      .attr('stroke-dasharray','4,4');
+    // vertical ACI label
+    bandG.append('text').attr('x',6).attr('y',cy+4)
+      .attr('fill',ACI_COLOR[aci]).attr('font-family','Space Mono,monospace')
+      .attr('font-size',8).attr('font-weight','700').attr('opacity',0.75)
+      .text(aci==='High'?'H':aci==='Medium'?'M':'L');
+    bandG.append('text').attr('x',6).attr('y',cy+14)
+      .attr('fill',ACI_COLOR[aci]).attr('font-family','Space Mono,monospace')
+      .attr('font-size',7).attr('opacity',0.5)
+      .text('ACI');
+  });
+
+  /* ── Build nodes ── */
+  const rng=mkRNG(99191);
+  const nodes=STATES.map((s,i)=>({
+    id:s.name,aci:s.aci,idx:i,
+    x:50+rng()*(KG.w-90),
+    y:KG.h*ACI_Y[s.aci]+(rng()-0.5)*KG.h*0.10,
+    vx:0,vy:0,
+  }));
+
+  /* ── Build edges: all intra-ACI pairs + sparse inter ── */
+  const rng2=mkRNG(55577);
+  const links=[];
+  nodes.forEach((a,i)=>nodes.forEach((b,j)=>{
+    if(j<=i)return;
+    if(a.aci===b.aci) links.push({source:a.id,target:b.id,aci:a.aci,type:'intra'});
+    else if(rng2()<0.06) links.push({source:a.id,target:b.id,type:'inter'});
+  }));
+
+  /* ── Force simulation ── */
+  KG.sim=d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(d=>d.id)
+      .distance(d=>d.type==='intra'?Math.max(KG.w/7,55):Math.max(KG.w/4,90))
+      .strength(d=>d.type==='intra'?0.3:0.03))
+    .force('charge',d3.forceManyBody().strength(-140))
+    .force('x',d3.forceX(d=>KG.w/2).strength(0.012))
+    .force('y',d3.forceY(d=>KG.h*ACI_Y[d.aci]).strength(0.58))
+    .force('collision',d3.forceCollide(26))
+    .alphaDecay(0.016);
+
+  /* ── Draw links ── */
+  const lgr=svg.append('g');
+  KG.lk=lgr.selectAll('line').data(links).enter().append('line')
+    .attr('stroke',d=>d.type==='intra'?ACI_COLOR[d.aci]:'#1c2e48')
+    .attr('stroke-width',d=>d.type==='intra'?1.2:0.5)
+    .attr('stroke-opacity',d=>d.type==='intra'?0.25:0.14)
+    .attr('stroke-dasharray',d=>d.type==='inter'?'3,6':null);
+
+  /* ── Draw nodes ── */
+  const ngr=svg.append('g');
+  KG.ng=ngr.selectAll('g.n').data(nodes).enter().append('g').attr('class','n')
+    .style('cursor','grab')
+    .call(d3.drag()
+      .on('start',(ev,d)=>{if(!ev.active)KG.sim.alphaTarget(0.25).restart();d.fx=d.x;d.fy=d.y;})
+      .on('drag', (ev,d)=>{d.fx=ev.x;d.fy=ev.y;})
+      .on('end',  (ev,d)=>{if(!ev.active)KG.sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+
+  // risk pulse ring
+  KG.ng.append('circle').attr('class','rp').attr('r',28).attr('fill','none')
+    .attr('stroke','#ff4757').attr('stroke-width',2).attr('stroke-opacity',0).attr('filter','url(#rg)');
+  // ACI outer ring
+  KG.ng.append('circle').attr('class','ar').attr('r',20).attr('fill','none')
+    .attr('stroke',d=>ACI_COLOR[d.aci]).attr('stroke-width',2).attr('stroke-opacity',0.6).attr('filter','url(#ng)');
+  // dark bg
+  KG.ng.append('circle').attr('class','bg').attr('r',16).attr('fill','#080f1d').attr('stroke','none');
+  // TF upper arc (purple)
+  KG.ng.append('path').attr('class','ta').attr('fill','#be5cf5').attr('opacity',0.85);
+  // TM lower arc (cyan)
+  KG.ng.append('path').attr('class','ma').attr('fill','#00d2d3').attr('opacity',0.85);
+  // inner sheen ring
+  KG.ng.append('circle').attr('class','sh').attr('r',16).attr('fill','none')
+    .attr('stroke','rgba(255,255,255,0.06)').attr('stroke-width',1);
+  // centre pip
+  KG.ng.append('circle').attr('class','cp').attr('r',2.5).attr('opacity',0.7);
+  // name label
+  KG.ng.append('text').attr('class','nl').attr('text-anchor','middle').attr('dy',30)
+    .attr('font-family','Space Mono,monospace').attr('font-size',7.5).attr('font-weight','700').attr('fill','#7a9cc2')
+    .text(d=>d.id.length>9?d.id.slice(0,8)+'…':d.id);
+  // MAE label
+  KG.ng.append('text').attr('class','ml').attr('text-anchor','middle').attr('dy',39)
+    .attr('font-family','Space Mono,monospace').attr('font-size',6.5).attr('fill','#3e6080');
+
+  /* ── Tooltip ── */
+  const tip=document.getElementById('kgTip');
+  KG.ng
+    .on('mouseenter',function(ev,d){
+      const s=sStat(curT)[d.id],c=mCol(s.mae);
+      tip.style.display='block';
+      tip.innerHTML=`<div style="color:${ACI_COLOR[d.aci]};font-weight:700;font-size:11px;margin-bottom:6px">${d.id}</div>
+        <div>ACI:&nbsp;<b style="color:${ACI_COLOR[d.aci]}">${d.aci}</b></div>
+        <div>TF_On:&nbsp;<b style="color:#be5cf5">${s.tfM.toFixed(2)}</b>&nbsp;σ&nbsp;${s.tfS.toFixed(2)}</div>
+        <div>TM_On:&nbsp;<b style="color:#00d2d3">${s.tmM.toFixed(2)}</b>&nbsp;σ&nbsp;${s.tmS.toFixed(2)}</div>
+        <div>MAE (${isFair?'Fair':'Biased'}):&nbsp;<b style="color:${c}">${s.mae.toFixed(3)}</b></div>
+        <div>TM at Risk:&nbsp;<b style="color:#ff4757">${(s.tmRisk*100).toFixed(1)}%</b></div>
+        <div style="color:#3e6080;margin-top:5px;font-size:9px">T=${curT} yrs</div>`;
+      d3.select(this).select('.ar').attr('stroke-opacity',1).attr('stroke-width',3.5);
+    })
+    .on('mousemove',ev=>{tip.style.left=(ev.clientX+16)+'px';tip.style.top=(ev.clientY-12)+'px';})
+    .on('mouseleave',function(){tip.style.display='none';d3.select(this).select('.ar').attr('stroke-opacity',0.6).attr('stroke-width',2);});
+
+  /* ── Tick ── */
+  KG.sim.on('tick',()=>{
+    nodes.forEach(d=>{d.x=Math.max(28,Math.min(KG.w-28,d.x));d.y=Math.max(18,Math.min(KG.h-18,d.y));});
+    KG.lk.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    KG.ng.attr('transform',d=>`translate(${d.x.toFixed(1)},${d.y.toFixed(1)})`);
+  });
+
+  KG.ok=true;
+  updateKG();
+}
+
+function updateKG(){
+  if(!KG.ok)return;
+  const st=sStat(curT);
+  const allM=Object.values(st).map(s=>s.mae);
+  const mMax=Math.max(...allM,0.5);
+  const expTF=40-0.20*curT, expTM=45+0.30*curT;
+  const maxDev=9;
+
+  KG.ng.each(function(d){
+    const s=st[d.id],nd=d3.select(this),col=mCol(s.mae),dur=580;
+    const mFrac=s.mae/mMax;
+    const isRisk=s.tmRisk>0.30;
+
+    // ACI outer ring — radius & stroke ∝ MAE
+    nd.select('.ar').transition().duration(dur)
+      .attr('r',18+mFrac*9).attr('stroke-width',1.5+mFrac*3.5);
+
+    // Risk pulse ring
+    nd.select('.rp').transition().duration(dur)
+      .attr('r',26+s.tmRisk*12)
+      .attr('stroke-opacity',isRisk?0.45+s.tmRisk*0.35:0);
+
+    // Background tint
+    nd.select('.bg').transition().duration(dur)
+      .attr('fill',d3.interpolateRgb('#070f1d',col)(0.20));
+
+    // TF upper arc — deviation → radius
+    const tfDev=Math.min(Math.abs(s.tfM-expTF)/maxDev,1);
+    const tfR=2+tfDev*13;
+    nd.select('.ta').transition().duration(dur)
+      .attr('d',arcG({innerRadius:0,outerRadius:tfR,startAngle:-Math.PI/2,endAngle:Math.PI/2}))
+      .attr('transform','rotate(180)');
+
+    // TM lower arc
+    const tmDev=Math.min(Math.abs(s.tmM-expTM)/maxDev,1);
+    const tmR=2+tmDev*13;
+    nd.select('.ma').transition().duration(dur)
+      .attr('d',arcG({innerRadius:0,outerRadius:tmR,startAngle:-Math.PI/2,endAngle:Math.PI/2}));
+
+    // Centre pip
+    nd.select('.cp').transition().duration(dur)
+      .attr('r',1.5+mFrac*4).attr('fill',col).attr('opacity',0.85);
+
+    // Labels
+    nd.select('.nl').attr('fill',col);
+    nd.select('.ml').text(s.mae.toFixed(2)).attr('fill',col);
+  });
+
+  // Link thickness = biomarker similarity
+  KG.lk.transition().duration(580)
+    .attr('stroke-width',d=>{
+      if(d.type==='inter')return 0.5;
+      const a=st[d.source.id??d.source],b=st[d.target.id??d.target];
+      if(!a||!b)return 1;
+      const diff=Math.abs(a.tfM-b.tfM)+Math.abs(a.tmM-b.tmM);
+      return Math.max(0.3,3.2-diff*0.20);
+    })
+    .attr('stroke-opacity',d=>d.type==='inter'?0.12:0.30);
+
+  KG.sim.alpha(0.15).restart();
+  document.getElementById('distT').textContent=curT;
+}
+
+/* ============================================================
+   INIT + UPDATE
+   ============================================================ */
+function initCharts(){
+  Plotly.newPlot('mapChart', mapTraces(0,false), mapLayout(), PC);
+  Plotly.newPlot('timeChart',timeTraces(),        timeLayout(),PC);
+  initKG();
+  Plotly.newPlot('riskChart',riskTraces(0),       riskLayout(),PC);
+}
+
+function updateAll(){
+  Plotly.react('mapChart',mapTraces(curT,isFair),mapLayout(),PC);
+  Plotly.restyle('timeChart',{x:[[curT,curT]]},[6]);
+  updateKG();
+  const r=TS[curT].risk;
+  Plotly.restyle('riskChart',{y:[[r.High,r.Medium,r.Low]],text:[[r.High.toFixed(1)+'%',r.Medium.toFixed(1)+'%',r.Low.toFixed(1)+'%']]},[0]);
+  document.getElementById('riskT').textContent=curT;
+  updateStats();
+}
+
+function updateStats(){
+  const ts=TS[curT];
+  const mae=isFair?ts.fSMAE:ts.bSMAE;
+  const all=Object.values(mae);
+  const mx=Math.max(...all),mn=Math.min(...all);
+  const bias=mx-mn;
+  const mxS=Object.keys(mae).find(s=>mae[s]===mx)||'—';
+  const mnS=Object.keys(mae).find(s=>mae[s]===mn)||'—';
+  const bB=Math.max(...Object.values(ts.bSMAE))-Math.min(...Object.values(ts.bSMAE));
+  const fB=Math.max(...Object.values(ts.fSMAE))-Math.min(...Object.values(ts.fSMAE));
+  const red=bB>0?((bB-fB)/bB*100):0;
+  const bc=bias>3.5?'#ff4757':bias>2?'#ffa502':'#2ed573';
+  animS('sv-bias',bias.toFixed(3),bc);
+  animS('sv-max',mx.toFixed(3),'#ff4757');
+  animS('sv-maxname',mxS,null);
+  animS('sv-min',mn.toFixed(3),'#2ed573');
+  animS('sv-minname',mnS,null);
+  animS('sv-red',red.toFixed(1)+'%','#2ed573');
+}
+function animS(id,val,col){
+  const el=document.getElementById(id);if(!el)return;
+  el.textContent=val;if(col)el.style.color=col;
+  const card=el.closest('.stat-card');
+  if(card){card.classList.add('updating');setTimeout(()=>card.classList.remove('updating'),400);}
+}
+
+/* ============================================================
+   INTERACTIONS
+   ============================================================ */
+function onSliderChange(v){curT=+v;document.getElementById('timeBadge').textContent=curT;updateAll();}
+
+function onFairnessChange(){
+  isFair=document.getElementById('fairCheck').checked;
+  const chip=document.getElementById('modeChip');
+  const tR=document.getElementById('tglRight'),tL=document.getElementById('tglLeft');
+  if(isFair){chip.className='mode-chip fair';chip.textContent='✓ FAIRNESS-AWARE MODEL';tR.style.color='var(--green)';tL.style.color='var(--text3)';}
+  else{chip.className='mode-chip biased';chip.textContent='⚠ BASELINE MODEL (BIASED)';tL.style.color='var(--red)';tR.style.color='var(--text3)';}
+  updateAll();
+}
+
+function togglePlay(){
+  playing=!playing;
+  const btn=document.getElementById('playBtn'),icon=document.getElementById('playIcon'),txt=document.getElementById('playText');
+  if(playing){icon.textContent='⏸';txt.textContent='PAUSE';btn.classList.add('playing');
+    playTmr=setInterval(()=>{curT=curT>=10?0:curT+1;document.getElementById('timeSlider').value=curT;document.getElementById('timeBadge').textContent=curT;updateAll();},CFG.ANIM_INTERVAL);}
+  else{icon.textContent='▶';txt.textContent='PLAY';btn.classList.remove('playing');clearInterval(playTmr);}
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+window.addEventListener('load',()=>{initCharts();updateStats();});
+window.addEventListener('resize',()=>{
+  ['mapChart','timeChart','riskChart'].forEach(id=>Plotly.relayout(id,{autosize:true}));
+  if(KG.ok){KG.ok=false;if(KG.sim)KG.sim.stop();setTimeout(initKG,100);}
+});
+</script>
+</body>
+</html>
