@@ -128,7 +128,7 @@ Transgender_health/
 
 ## ⚖️ License
 
-Copyright © 2024 **Kweenbee187**
+Copyright © 2026 **Kweenbee187**
 
 Licensed under the [Apache License, Version 2.0](./LICENSE). You may use, reproduce, and distribute this work in accordance with the license terms.
 
